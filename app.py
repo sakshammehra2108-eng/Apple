@@ -5,11 +5,12 @@ import re
 from scipy import stats
 from datetime import datetime, timedelta
 
-# --- 1. DATA ENGINE (The "Infinite Loop" Core) ---
+# --- 1. THE DATA GENERATION QUANTUM ENGINE ---
 @st.cache_data
-def generate_apple_data(n=25000):
+def generate_executive_data(n=25000):
     np.random.seed(42)
     start_date = datetime(2025, 1, 1)
+    
     theaters = ['Americas', 'Europe', 'Greater China', 'Japan', 'Rest of Asia Pacific']
     products = {
         'iPhone 15 Pro': 1199, 'iPhone 15': 799, 
@@ -18,6 +19,7 @@ def generate_apple_data(n=25000):
         'iPad Air': 599, 'Apple Watch Ultra 2': 799, 'AirPods Max': 549
     }
     teams = [f"Ops-Team-{i:02d}" for i in range(1, 21)]
+    
     dates = [start_date + timedelta(seconds=np.random.randint(0, 31536000)) for _ in range(n)]
     prod_names = list(products.keys())
     selected_prods = np.random.choice(prod_names, n)
@@ -43,7 +45,7 @@ def generate_apple_data(n=25000):
     
     return df
 
-df = generate_apple_data()
+df = generate_executive_data()
 
 # --- 2. EXECUTIVE INTERFACE ---
 st.set_page_config(page_title="Apple Executive Command", layout="wide")
@@ -88,13 +90,15 @@ with t3:
     st.info("Deviations from the logarithmic curve suggest retail pricing breaches or data manipulation.")
     benford_counts = f_df['Lead_Digit'].value_counts(normalize=True).sort_index().drop(0, errors='ignore')
     st.bar_chart(benford_counts)
-        st.warning("Detection: Slight deviation in Digit 4 suggests bulk enterprise discounting in APAC.")
+    # Corrected indentation for st.warning
+    st.warning("Detection: Slight deviation in Digit 4 suggests bulk enterprise discounting in APAC.")
 
 with t4:
     st.subheader("Inventory vs. Fulfillment Risk")
     st.scatter_chart(data=f_df, x='Inventory_On_Hand', y='Units_Sold', color='Theater', size='Revenue_Z_Score')
     
 # --- 6. AUDIT LOG ---
+st.divider()
 st.subheader("Executive Audit Trail")
 audit_data = f_df[abs(f_df['Revenue_Z_Score']) > z_risk]
 st.dataframe(audit_data.sort_values(by='Gross_Revenue', ascending=False), use_container_width=True)

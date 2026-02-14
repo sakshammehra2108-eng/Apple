@@ -307,7 +307,7 @@ with t3:
 
 with t4:
     st.subheader("Inventory Velocity & Risk Scoring")
-        st.scatter_chart(data=f_df, x='Inventory_Stock', y='Units_Sold', color='Model', size='Z_Score')
+    st.scatter_chart(data=f_df, x='Inventory_Stock', y='Units_Sold', color='Model', size='Z_Score')
 
 # --- 7. AUDIT LOG ---
 st.divider()

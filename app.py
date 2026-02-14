@@ -301,7 +301,7 @@ with t2:
 
 with t3:
     st.subheader("Price Integrity & Fraud Detection")
-        ben_counts = f_df['Lead_Digit'].value_counts(normalize=True).sort_index().drop(0, errors='ignore')
+    ben_counts = f_df['Lead_Digit'].value_counts(normalize=True).sort_index().drop(0, errors='ignore')
     st.bar_chart(ben_counts)
     st.warning("Detection: Slight deviation in Digit 4 suggests bulk enterprise discounting in APAC.")
 

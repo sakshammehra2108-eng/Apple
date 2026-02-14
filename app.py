@@ -6,7 +6,6 @@ from scipy import stats
 from datetime import datetime, timedelta
 
 # --- 1. THE ARCHIVAL SKU MASTER (EXACT INTEGRATION) ---
-# [Your full 250+ line sku_master dictionary remains the source of truth]
 sku_master = {
     'iPhone': {
         'iPhone (Original) 2007': ['Silver/Black'],
@@ -246,7 +245,7 @@ df = generate_master_dataset()
 
 # --- 3. THE COMMAND CENTER UI ---
 st.set_page_config(page_title="Apple Universal Command", layout="wide")
-st.title(" Apple Global Operations Command (2000-2026)")
+st.title("Apple Global Operations Command (2000-2026)")
 st.markdown("#### Integrated SKU, Variant, and Color Intelligence Suite")
 
 # --- 4. PRECISION FILTERS (FIXED "EMPTY = ALL" LOGIC) ---
@@ -254,21 +253,16 @@ with st.sidebar:
     st.header("Strategic Controls")
     year_range = st.slider("Select Era", 2000, 2026, (2015, 2026))
     
-    # Category Filter
     cat_filter = st.multiselect("Category", list(sku_master.keys()))
-    # Logic: If nothing selected, use all categories
     cat_final = cat_filter if cat_filter else list(sku_master.keys())
     
-    # Model Filter
     available_models = []
     for c in cat_final:
         available_models.extend(list(sku_master[c].keys()))
     
     model_filter = st.multiselect("Active Models", available_models)
-    # Logic: If nothing selected, use all available models for those categories
     model_final = model_filter if model_filter else available_models
     
-    # Color Filter
     available_colors = set()
     for cat in sku_master:
         for model in model_final:
@@ -276,7 +270,6 @@ with st.sidebar:
                 available_colors.update(sku_master[cat][model])
     
     color_filter = st.multiselect("Launch Colors", list(available_colors))
-    # Logic: If nothing selected, use all colors for those models
     color_final = color_filter if color_filter else list(available_colors)
 
 # APPLY FILTERS
@@ -308,16 +301,16 @@ with t2:
 
 with t3:
     st.subheader("Price Integrity & Fraud Detection")
-    
-    ben_counts = f_df['Lead_Digit'].value_counts(normalize=True).sort_index().drop(0, errors='ignore')
+        ben_counts = f_df['Lead_Digit'].value_counts(normalize=True).sort_index().drop(0, errors='ignore')
     st.bar_chart(ben_counts)
+    st.warning("Detection: Slight deviation in Digit 4 suggests bulk enterprise discounting in APAC.")
 
 with t4:
     st.subheader("Inventory Velocity & Risk Scoring")
-    
-    st.scatter_chart(data=f_df, x='Inventory_Stock', y='Units_Sold', color='Model', size='Z_Score')
+        st.scatter_chart(data=f_df, x='Inventory_Stock', y='Units_Sold', color='Model', size='Z_Score')
 
-# --- 7. EXECUTIVE AUDIT LOG ---
+# --- 7. AUDIT LOG ---
 st.divider()
-st.subheader("Global Transaction Audit Log")
-st.dataframe(f_df.sort_values(by='Timestamp', ascending=False), use_container_width=True)
+st.subheader("Executive Audit Trail")
+audit_data = f_df[abs(f_df['Z_Score']) > 3]
+st.dataframe(audit_data.sort_values(by='Gross_Revenue', ascending=False) if 'Gross_Revenue' in audit_data else audit_data, use_container_width=True)

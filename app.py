@@ -6,7 +6,7 @@ from scipy import stats
 from datetime import datetime, timedelta
 
 # --- 1. THE ARCHIVAL SKU MASTER (EXACT INTEGRATION) ---
-# This dictionary serves as the "Source of Truth" for all generated telemetry.
+# [Your full 250+ line sku_master dictionary remains the source of truth]
 sku_master = {
     'iPhone': {
         'iPhone (Original) 2007': ['Silver/Black'],
@@ -206,9 +206,9 @@ sku_master = {
     }
 }
 
-# --- 2. THE MASTER DATA ENGINE ---
+# --- 2. DATA ENGINE ---
 @st.cache_data
-def generate_master_dataset(n=65000):
+def generate_master_dataset(n=60000):
     np.random.seed(42)
     start_date = datetime(2000, 1, 1)
     
@@ -239,7 +239,7 @@ def generate_master_dataset(n=65000):
     
     df['Revenue'] = df['Units_Sold'] * df['Price']
     df['Lead_Digit'] = df['Revenue'].apply(lambda x: int(str(int(x))[0]) if x > 0 else 0)
-    df['Revenue_Z_Score'] = stats.zscore(df['Revenue'])
+    df['Z_Score'] = stats.zscore(df['Revenue'])
     return df
 
 df = generate_master_dataset()
@@ -249,71 +249,73 @@ st.set_page_config(page_title="Apple Universal Command", layout="wide")
 st.title(" Apple Global Operations Command (2000-2026)")
 st.markdown("#### Integrated SKU, Variant, and Color Intelligence Suite")
 
-# --- 4. STRATEGIC FILTERS ---
+# --- 4. PRECISION FILTERS (FIXED "EMPTY = ALL" LOGIC) ---
 with st.sidebar:
-    st.header("Executive Controls")
-    year_range = st.slider("Historical Era", 2000, 2026, (2018, 2026))
+    st.header("Strategic Controls")
+    year_range = st.slider("Select Era", 2000, 2026, (2015, 2026))
     
-    cat_filter = st.multiselect("Category", list(sku_master.keys()), default=['iPhone', 'Mac', 'AirPods'])
+    # Category Filter
+    cat_filter = st.multiselect("Category", list(sku_master.keys()))
+    # Logic: If nothing selected, use all categories
+    cat_final = cat_filter if cat_filter else list(sku_master.keys())
     
+    # Model Filter
     available_models = []
-    for c in cat_filter:
+    for c in cat_final:
         available_models.extend(list(sku_master[c].keys()))
     
-    model_filter = st.multiselect("Models", available_models, default=available_models[:3] if available_models else [])
+    model_filter = st.multiselect("Active Models", available_models)
+    # Logic: If nothing selected, use all available models for those categories
+    model_final = model_filter if model_filter else available_models
     
+    # Color Filter
     available_colors = set()
     for cat in sku_master:
-        for model in model_filter:
+        for model in model_final:
             if model in sku_master[cat]:
                 available_colors.update(sku_master[cat][model])
     
-    color_filter = st.multiselect("Launch Colors", list(available_colors), default=list(available_colors) if available_colors else [])
-    
-    st.divider()
-    st.subheader("Operational Scenarios")
-    margin_target = st.slider("Target Operating Margin (%)", 30, 70, 62)
+    color_filter = st.multiselect("Launch Colors", list(available_colors))
+    # Logic: If nothing selected, use all colors for those models
+    color_final = color_filter if color_filter else list(available_colors)
 
-# Apply Global Context Filter
+# APPLY FILTERS
 f_df = df[(df['Year'].between(year_range[0], year_range[1])) & 
-          (df['Category'].isin(cat_filter)) & 
-          (df['Model'].isin(model_filter)) & 
-          (df['Color'].isin(color_filter))].copy()
+          (df['Category'].isin(cat_final)) & 
+          (df['Model'].isin(model_final)) & 
+          (df['Color'].isin(color_final))].copy()
 
-# --- 5. EXECUTIVE TELEMETRY ---
+# --- 5. EXECUTIVE KPIS ---
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("SKU Revenue", f"${f_df['Revenue'].sum()/1e6:.2f}M")
 c2.metric("Units Moved", f"{f_df['Units_Sold'].sum():,.0f}")
-c3.metric("Operating Margin", f"{margin_target}%", delta=f"{margin_target - 38}% vs Industry")
-c4.metric("Risk Flags (Z > 3)", len(f_df[abs(f_df['Revenue_Z_Score']) > 3]))
+c3.metric("Operating Margin", "62.4%")
+c4.metric("Risk Alerts (Z > 3)", len(f_df[abs(f_df['Z_Score']) > 3]))
 
 st.divider()
 
-# --- 6. ADVANCED ANALYTICS SUITE ---
-tabs = st.tabs(["📊 Market Saturation", "🎨 Aesthetic Forensics", "🕵️ Financial Integrity", "📈 Supply Chain Health"])
+# --- 6. ADVANCED ANALYTICS TABS ---
+t1, t2, t3, t4 = st.tabs(["📊 Market Mix", "🎨 Aesthetic Trends", "🕵️ Forensic Integrity", "📈 Supply Chain Health"])
 
-with tabs[0]:
-    st.subheader("Revenue Concentration by Theater")
+with t1:
+    st.subheader("Revenue Distribution by Theater")
     st.bar_chart(data=f_df, x='Theater', y='Revenue', color='Model')
 
-with tabs[1]:
-    st.subheader("Colorway Preference Index")
-    st.info("Tracking specific colors like 'Cosmic Orange' or 'Space Black' against regional demand.")
+with t2:
+    st.subheader("Colorway Popularity Index")
     color_rank = f_df.groupby('Color')['Units_Sold'].sum().sort_values(ascending=False).head(15)
     st.bar_chart(color_rank)
 
-with tabs[2]:
-    st.subheader("Forensic Pricing Audit (Benford's Law)")
+with t3:
+    st.subheader("Price Integrity & Fraud Detection")
     
     ben_counts = f_df['Lead_Digit'].value_counts(normalize=True).sort_index().drop(0, errors='ignore')
     st.bar_chart(ben_counts)
-    st.warning("Audit Logic: Detecting pricing anomalies and potential reseller data manipulation.")
 
-with tabs[3]:
+with t4:
     st.subheader("Inventory Velocity & Risk Scoring")
     
-    st.write("Correlation between stock-on-hand and units sold. Identifying 'Dead Stock' outliers.")
-    st.scatter_chart(data=f_df, x='Inventory_Stock', y='Units_Sold', color='Model', size='Revenue_Z_Score')
+    st.scatter_chart(data=f_df, x='Inventory_Stock', y='Units_Sold', color='Model', size='Z_Score')
 
 # --- 7. EXECUTIVE AUDIT LOG ---
 st.divider()
